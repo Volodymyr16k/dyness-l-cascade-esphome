@@ -1,0 +1,557 @@
+
+
+# Board: ESP32 DevKit V1 (Espressif)
+# Driver: SN65HVD230 High-Speed Hardware CAN (500 KBPS)
+
+substitutions:
+  devicename: "sniffer-devkitwroom32"
+  friendlyname: "Sniffer-DevKitWroom32"
+  on_boot:
+    priority: -100  # Виконується наприкінці завантаження, коли сенсори вже готові
+    then:
+      - text_sensor.template.publish:
+          id: ts_new_id
+          state: "[Sniffer is aktive. Wait ID...]"
+          
+esphome:
+  name: ${devicename}
+  friendly_name: ${friendlyname}
+  compile_process_limit: 1  
+
+esp32:
+  variant: esp32
+  flash_size: 4MB
+  framework:
+    type: esp-idf
+    advanced:
+      minimum_chip_revision: "3.1" # Оптимізує бінарний код під вашу ревізію чипа
+      sram1_as_iram: true          # Виділяє +40КБ швидкої ОЗУ під CAN-чергу TWAI
+
+
+logger:
+  level: INFO # Рівень INFO захищає від переповнення текстового буфера логів Home Assistant
+  
+api:
+  encryption:
+    key: "********************************************"
+  reboot_timeout: 15min 
+    
+web_server:
+  port: 80           
+ota:
+  - platform: esphome
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+  fast_connect: false
+  power_save_mode: NONE
+  ap:
+    ssid: "Sniffer Fallback Hotspot"
+    password: "88888888"
+
+captive_portal:
+
+# =======================================================================
+# 1. ОГОЛОШЕННЯ СЕНСОРІВ ТА ШАБЛОНІВ (СТРОГО ВИЩЕ ЗА БЛОК CANBUS)
+# =======================================================================
+
+text_sensor:
+  - platform: template
+    id: battery_name
+    name: "BMS - Battery Model Name"
+  - platform: template
+    id: ts_new_id
+    name: "Scanner - Newly Discovered CAN ID"
+
+# --- 🛠️ СЕКЦІЯ БІНАРНИХ ФЛАГІВ СТАНУ BMS ---
+
+binary_sensor:
+  - platform: template
+    id: alarm_cell_overvoltage
+    name: "BMS Alarm Cell Overvoltage"
+    device_class: "problem"
+  - platform: template
+    id: alarm_cell_undervoltage
+    name: "BMS Alarm Cell Undervoltage"
+    device_class: "problem"
+  - platform: template
+    id: alarm_system_error
+    name: "BMS Alarm System Error"
+    device_class: "problem"
+  - platform: template
+    id: flag_charge_enable
+    name: "BMS Flag Charge Enable"
+    device_class: "connectivity"
+  - platform: template
+    id: flag_discharge_enable
+    name: "BMS Flag Discharge Enable"
+    device_class: "connectivity"
+
+
+sensor:
+  - platform: wifi_signal
+    name: "Scanner - WiFi Signal"
+    update_interval: 60s
+  - platform: uptime
+    name: "Scanner - Uptime"
+    update_interval: 60s
+    
+
+# =======================================================================
+# 1. ОФІЦІЙНІ ВЕРИФІКОВАНІ СЕНСОРИ ТЕЛЕМЕТРІЇ DYNESS-L
+# =======================================================================
+
+  # --- 📊 КАНАЛ MASTER БАТАРЕЇ (БЛОК №1) ---
+  - platform: template
+    id: dyness_master_total_voltage
+    name: "Dyness Master Total Voltage"
+    unit_of_measurement: "V"
+    accuracy_decimals: 2
+    device_class: "voltage"
+    state_class: "measurement"
+
+  - platform: template
+    id: dyness_master_avg_cell
+    name: "Dyness Master Avg Cell Voltage"
+    unit_of_measurement: "V"
+    accuracy_decimals: 3
+    device_class: "voltage"
+    state_class: "measurement"
+
+  - platform: template
+    id: dyness_master_max_cell
+    name: "Dyness Master Max Cell Voltage"
+    unit_of_measurement: "V"
+    accuracy_decimals: 3
+    device_class: "voltage"
+    state_class: "measurement"
+
+  - platform: template
+    id: dyness_master_min_cell
+    name: "Dyness Master Min Cell Voltage"
+    unit_of_measurement: "V"
+    accuracy_decimals: 3
+    device_class: "voltage"
+    state_class: "measurement"
+
+  - platform: template
+    id: dyness_master_battery_cycles
+    name: "Dyness Master Hardware Cycles"
+    icon: "mdi:battery-refresh"
+    accuracy_decimals: 0
+    state_class: "total_increasing"
+
+  # --- 📊 КАНАЛ SLAVE БАТАРЕЇ (БЛОК №2) ---
+  - platform: template
+    id: dyness_slave_total_voltage
+    name: "Dyness Slave Total Voltage"
+    unit_of_measurement: "V"
+    accuracy_decimals: 2
+    device_class: "voltage"
+    state_class: "measurement"
+
+  - platform: template
+    id: dyness_slave_avg_cell
+    name: "Dyness Slave Avg Cell Voltage"
+    unit_of_measurement: "V"
+    accuracy_decimals: 3
+    device_class: "voltage"
+    state_class: "measurement"
+
+  - platform: template
+    id: dyness_slave_max_cell
+    name: "Dyness Slave Max Cell Voltage"
+    unit_of_measurement: "V"
+    accuracy_decimals: 3
+    device_class: "voltage"
+    state_class: "measurement"
+
+  - platform: template
+    id: dyness_slave_min_cell
+    name: "Dyness Slave Min Cell Voltage"
+    unit_of_measurement: "V"
+    accuracy_decimals: 3
+    device_class: "voltage"
+    state_class: "measurement"
+
+  - platform: template
+    id: dyness_slave_battery_cycles
+    name: "Dyness Slave Hardware Cycles"
+    icon: "mdi:battery-refresh"
+    accuracy_decimals: 0
+    state_class: "total_increasing"
+
+  # --- 🔋 СУМАРНІ ІНВЕРТОРНІ ПАРАМЕТРИ PYLONTECH ---
+  - platform: template
+    id: dyness_stack_capacity
+    name: "BMS Stack Nominal Capacity"
+    unit_of_measurement: "Ah"
+    accuracy_decimals: 0
+
+  - platform: template
+    id: dyness_stack_recommended_current
+    name: "BMS Stack Recommended Current"
+    unit_of_measurement: "A"
+    accuracy_decimals: 0
+
+  - platform: template
+    id: pylon_max_charge_voltage
+    name: "BMS Max Charge Voltage"
+    unit_of_measurement: "V"
+    accuracy_decimals: 1
+
+  - platform: template
+    id: pylon_max_charge_current
+    name: "BMS Max Charge Current"
+    unit_of_measurement: "A"
+    accuracy_decimals: 1
+
+  - platform: template
+    id: pylon_max_discharge_current
+    name: "BMS Max Discharge Current"
+    unit_of_measurement: "A"
+    accuracy_decimals: 1
+
+  - platform: template
+    id: pylon_soc
+    name: "BMS Total SoC"
+    unit_of_measurement: "%"
+    accuracy_decimals: 0
+    device_class: "battery"
+
+  - platform: template
+    id: pylon_soh
+    name: "BMS Total SoH"
+    unit_of_measurement: "%"
+    accuracy_decimals: 0
+
+  - platform: template
+    id: pylon_voltage
+    name: "BMS Pack Voltage"
+    unit_of_measurement: "V"
+    accuracy_decimals: 2
+
+  - platform: template
+    id: pylon_current
+    name: "BMS Pack Current"
+    unit_of_measurement: "A"
+    accuracy_decimals: 1
+
+  - platform: template
+    id: pylon_temp
+    name: "BMS Pack Temperature"
+    unit_of_measurement: "°C"
+    accuracy_decimals: 1
+
+  - platform: template
+    id: dyness_battery_cycles
+    name: "BMS Total Active Cycles"
+    icon: "mdi:battery-refresh"
+    accuracy_decimals: 0
+
+
+
+# =======================================================================
+# ДІАГНОСТИЧНІ СЕНСОРИ ДЛЯ РЕНТГЕНУ КАДРІВ
+# =======================================================================
+  # --- БАЙТ-ХАБ MASTER БАТАРЕЇ ---
+  - platform: template
+    id: m_b0_1
+    name: "X-Ray Master Byte 0-1"
+    accuracy_decimals: 0
+  - platform: template
+    id: m_b2_3
+    name: "X-Ray Master Byte 2-3"
+    accuracy_decimals: 0
+  - platform: template
+    id: m_b4_5
+    name: "X-Ray Master Byte 4-5"
+    accuracy_decimals: 0
+  - platform: template
+    id: m_b6_7
+    name: "X-Ray Master Byte 6-7"
+    accuracy_decimals: 0
+
+  # --- БАЙТ-ХАБ SLAVE БАТАРЕЇ ---
+  - platform: template
+    id: s_b0_1
+    name: "X-Ray Slave Byte 0-1"
+    accuracy_decimals: 0
+  - platform: template
+    id: s_b2_3
+    name: "X-Ray Slave Byte 2-3"
+    accuracy_decimals: 0
+  - platform: template
+    id: s_b4_5
+    name: "X-Ray Slave Byte 4-5"
+    accuracy_decimals: 0
+  - platform: template
+    id: s_b6_7
+    name: "X-Ray Slave Byte 6-7"
+    accuracy_decimals: 0
+
+button:
+  - platform: template
+    name: "Reset Sniffer Cache"
+    icon: "mdi:delete-sweep"
+    on_press:
+      - lambda: |-
+          id(local_discovered_ids).clear(); // Повністю очищуємо С++ масив адрес
+          id(ts_new_id).publish_state("[Пам'ять очищено. Очікування...]");
+          ESP_LOGI("sniffer", "Пам'ять сніфера успішно занулена користувачем!");
+
+# =======================================================================
+# 2. АПАРАТНИЙ ДРАЙВЕР ВБУДОВАНОЇ ШИНИ CAN (TWAI) З ПОВНИМ ГЛУШНИКОМ ШУМУ
+# =======================================================================
+globals:
+  - id: local_discovered_ids
+    type: std::set<uint32_t>
+    
+canbus:
+  - platform: esp32_can
+    id: can_bus
+    tx_pin: GPIO14  # CTX ніжка вашого модуля SN65HVD230
+    rx_pin: GPIO13  # CRX ніжка вашого модуля SN65HVD230
+    bit_rate: 500KBPS
+    can_id: 0
+
+    on_frame:
+# --- РОЗПАКОВКА ВЕРИФІКОВАНИХ ІНЖЕНЕРНИХ КАДРІВ MASTER (0x18F211xx) ---
+      - can_id: '0x18F21121'
+        use_extended_id: true
+        then:
+          - lambda: |-
+              if (x.size() >= 6) {
+                uint16_t master_v_raw   = (uint16_t(x.at(0)) << 8) | x.at(1);
+                uint16_t master_avg_raw = (uint16_t(x.at(4)) << 8) | x.at(5);
+                id(dyness_master_total_voltage).publish_state(master_v_raw / 100.0f);
+                id(dyness_master_avg_cell).publish_state(master_avg_raw / 1000.0f);
+              }
+              return;
+
+      - can_id: '0x18F21122'
+        use_extended_id: true
+        then:
+          - lambda: |-
+              if (x.size() >= 2) {
+                uint16_t master_max_raw = (uint16_t(x.at(0)) << 8) | x.at(1);
+                id(dyness_master_max_cell).publish_state(master_max_raw / 1000.0f);
+                
+                // Автоматичний динамічний розрахунок істинного мінімуму банки
+                if (id(dyness_master_avg_cell).has_state()) {
+                  float calculated_min = (id(dyness_master_avg_cell).state * 2.0f) - (master_max_raw / 1000.0f);
+                  id(dyness_master_min_cell).publish_state(calculated_min);
+                }
+              }
+              return;
+
+      - can_id: '0x18F21123'
+        use_extended_id: true
+        then:
+          - lambda: |-
+              if (x.size() >= 2) {
+                uint16_t m_cycles_be = (uint16_t(x.at(0)) << 8) | x.at(1);
+                if (m_cycles_be > 0 && m_cycles_be < 3000) {
+                  id(dyness_master_battery_cycles).publish_state(m_cycles_be);
+                }
+              }
+              return;
+
+# --- РОЗПАКОВКА ВЕРИФІКОВАНИХ ИНЖЕНЕРНИХ КАДРІВ SLAVE (0x18F212xx) ---
+      - can_id: '0x18F21221'
+        use_extended_id: true
+        then:
+          - lambda: |-
+              if (x.size() >= 6) {
+                uint16_t slave_v_raw   = (uint16_t(x.at(0)) << 8) | x.at(1);
+                uint16_t slave_avg_raw = (uint16_t(x.at(4)) << 8) | x.at(5);
+                id(dyness_slave_total_voltage).publish_state(slave_v_raw / 100.0f);
+                id(dyness_slave_avg_cell).publish_state(slave_avg_raw / 1000.0f);
+              }
+              return;
+
+      - can_id: '0x18F21222'
+        use_extended_id: true
+        then:
+          - lambda: |-
+              if (x.size() >= 2) {
+                uint16_t slave_max_raw = (uint16_t(x.at(0)) << 8) | x.at(1);
+                id(dyness_slave_max_cell).publish_state(slave_max_raw / 1000.0f);
+                
+                // Автоматичний динамічний розрахунок істинного мінімуму банки
+                if (id(dyness_slave_avg_cell).has_state()) {
+                  float calculated_min = (id(dyness_slave_avg_cell).state * 2.0f) - (slave_max_raw / 1000.0f);
+                  id(dyness_slave_min_cell).publish_state(calculated_min);
+                }
+              }
+              return;
+
+      - can_id: '0x18F21223'
+        use_extended_id: true
+        then:
+          - lambda: |-
+              if (x.size() >= 2) {
+                uint16_t s_cycles_be = (uint16_t(x.at(0)) << 8) | x.at(1);
+                if (s_cycles_be > 0 && s_cycles_be < 3000) {
+                  id(dyness_slave_battery_cycles).publish_state(s_cycles_be);
+                }
+              }
+              return;
+
+# --- НОВИЙ ПОВНИЙ БІГ-ЕНДІАН РЕНТГЕН НАСТУПНОГО КАДРУ MASTER ---
+      - can_id: '0x18F21124'
+        use_extended_id: true
+        then:
+          - lambda: |-
+              if (x.size() >= 8) {
+                id(m_b0_1).publish_state((uint16_t(x.at(0)) << 8) | x.at(1));
+                id(m_b2_3).publish_state((uint16_t(x.at(2)) << 8) | x.at(3));
+                id(m_b4_5).publish_state((uint16_t(x.at(4)) << 8) | x.at(5));
+                id(m_b6_7).publish_state((uint16_t(x.at(6)) << 8) | x.at(7));
+              }
+              return;
+
+# --- НОВИЙ ПОВНИЙ БІГ-ЕНДІАН РЕНТГЕН НАСТУПНОГО КАДРУ SLAVE ---
+      - can_id: '0x18F21224'
+        use_extended_id: true
+        then:
+          - lambda: |-
+              if (x.size() >= 8) {
+                id(s_b0_1).publish_state((uint16_t(x.at(0)) << 8) | x.at(1));
+                id(s_b2_3).publish_state((uint16_t(x.at(2)) << 8) | x.at(3));
+                id(s_b4_5).publish_state((uint16_t(x.at(4)) << 8) | x.at(5));
+                id(s_b6_7).publish_state((uint16_t(x.at(6)) << 8) | x.at(7));
+              }
+              return;
+
+
+# --- ШИРОКОСМУГОВИЙ СНІФЕР СТАНДАРТНИХ ІНВЕРТОРНИХ КАДРІВ PYLONTECH ---
+      - can_id: 0x000
+        can_id_mask: 0x000
+        then:
+          - lambda: |-
+              switch(can_id) {
+                case 0x70D: {
+                  if (x.size() >= 8) {
+                    uint16_t dynamic_rec_current = (uint16_t(x.at(5)) << 8) | x.at(4);
+                    uint16_t dynamic_capacity    = (uint16_t(x.at(7)) << 8) | x.at(6);
+                    id(dyness_stack_capacity).publish_state(dynamic_capacity);
+                    id(dyness_stack_recommended_current).publish_state(dynamic_rec_current);
+                  }
+                  return;
+                }
+                case 0x351: {
+                  id(pylon_max_charge_voltage).publish_state(((uint16_t(x.at(1)) << 8) | x.at(0)) / 10.0f);
+                  id(pylon_max_charge_current).publish_state(((int16_t(x.at(3))  << 8) | x.at(2)) / 10.0f);
+                  id(pylon_max_discharge_current).publish_state(((int16_t(x.at(5)) << 8) | x.at(4)) / 10.0f);
+                  return;
+                }
+                case 0x355: {
+                  if (x.size() >= 4) {
+                    id(pylon_soc).publish_state(x.at(0));
+                    id(pylon_soh).publish_state((uint16_t(x.at(3)) << 8) | x.at(2));
+                  }
+                  return;
+                }
+                case 0x356: {
+                  int16_t volt = (int16_t(x.at(1)) << 8) | x.at(0);
+                  int16_t curr = (int16_t(x.at(3)) << 8) | x.at(2);
+                  int16_t temp = (int16_t(x.at(5)) << 8) | x.at(4);
+                  id(pylon_voltage).publish_state(volt / 100.0f);
+                  id(pylon_current).publish_state(curr / 10.0f);
+                  id(pylon_temp).publish_state(temp / 10.0f);
+                  return;
+                }
+                case 0x359: {
+                  id(alarm_cell_overvoltage).publish_state((x.at(0) & 0x02) != 0);
+                  id(alarm_cell_undervoltage).publish_state((x.at(0) & 0x04) != 0);
+                  id(alarm_system_error).publish_state((x.at(1) & 0x08) != 0);
+                  if (x.size() >= 6) {
+                    // Виправлено: Валідний С++ Big-Endian зсув байтів
+                    uint16_t pylon_cycles = (uint16_t(x.at(4)) << 8) | x.at(5);
+                    id(dyness_battery_cycles).publish_state(pylon_cycles);
+                  }
+                  return;
+                }
+                case 0x35C: {
+                  id(flag_charge_enable).publish_state((x.at(0) & 0x80) != 0);
+                  id(flag_discharge_enable).publish_state((x.at(0) & 0x40) != 0);
+                  return;
+                }
+                case 0x35E: {
+                  std::string name(x.begin(), x.end());
+                  id(battery_name).publish_state(name);
+                  return;
+                }
+              }
+
+# Маска 0x00000000 у режимі Extended змушує чіп ESP32 ловити і 11-бітні, і 29-бітні кадри!
+      - can_id: 0x00000000
+        can_id_mask: 0x00000000
+        use_extended_id: true
+        then:
+          - lambda: |-
+              switch(can_id) {
+                // ГЛУШНИК НЕОБРОБЛЕНОГО СЕРВІСНОГО ШУМУ (БЛОКУВАННЯ СПАМУ В КОНСОЛЬ)
+                case 0x305:   // Стандартний Pylontech-таймаут інвертора
+                case 0x30F:   // BMS Heartbeat (прапор «я живий»)
+                case 0x35A:   // Маска системних попереджень (Warnings)
+                case 0x35F:   // 03 88 = 904. Системна маска сумісності
+                //case 0x36D: 
+                case 0x370:   // Текст:  DYNESS-L
+                case 0x371:   // Текст:  Battery
+                // case 0x63E: case 0x63F: case 0x78F: case 0x7C7:
+                case 0x18F20102:   // Внутрішній Keep-Alive каскаду
+
+                case 0x18F21116:   // Службовий Master каскад
+                case 0x18F21121:
+                case 0x18F21122:
+                case 0x18F21123:
+                case 0x18F21124:   // Заглушений Master 24 (Реле/Маски)
+                case 0x18F21125:
+                case 0x18F21126:
+
+                case 0x18F21216:   // Службовий Slave каскад
+                case 0x18F21221:
+                case 0x18F21222:
+                case 0x18F21223:
+                case 0x18F21224:   // Заглушений Slave 24 (Реле/Маски)
+                case 0x18F21225:
+                case 0x18F21226:
+                return; 
+
+                default: {
+                  // ІНТЕЛЕКТУАЛЬНИЙ ЛОВЕЦЬ НОВИХ РІДКІСНИХ ІНЖЕНЕРНИХ АДРЕС ТА ЇХНЬОГО ЗМІСТУ (ВЕБ + ЛОГ)
+                  // Використовуємо локальний контекст або глобальне сховище
+                  // static std::set<uint32_t> local_discovered_ids;
+                  
+                  if (local_discovered_ids->value().find(can_id) == local_discovered_ids->value().end()) {
+                     if (local_discovered_ids->value().size() < 64) {
+                       local_discovered_ids->value().insert(can_id);
+                     
+                      
+                      // 1. Формуємо HEX-текст для ID кадру (наприклад: "0x18F21125")
+                      char id_buffer[32];
+                      sprintf(id_buffer, "0x%X", (unsigned int)can_id);
+                      
+                      // 2. Збираємо Data Bytes змісту пакета у HEX рядок
+                      std::string raw_bytes_str = "";
+                      char byte_buffer[8];
+                      for (size_t i = 0; i < x.size(); i++) {
+                        sprintf(byte_buffer, "%02X ", x.at(i));
+                        raw_bytes_str += byte_buffer;
+                      }
+                      
+                      // 3. Зводимо все в один красивий рядок для ВЕБ-інтерфейсу
+                      std::string full_web_output = std::string(id_buffer) + " [" + raw_bytes_str + "]";
+                      id(ts_new_id).publish_state(full_web_output);
+
+                    }
+
+                  }
+                  return; 
+                }
+              }
+
+
