@@ -64,7 +64,7 @@ text_sensor:
     id: ts_new_id
     name: "Scanner - Newly Discovered CAN ID"
 
-# --- 🛠️ СЕКЦІЯ БІНАРНИХ ФЛАГІВ СТАНУ BMS ---
+# --- СЕКЦІЯ БІНАРНИХ ФЛАГІВ СТАНУ BMS ---
 
 binary_sensor:
   - platform: template
@@ -102,7 +102,7 @@ sensor:
 # 1. ОФІЦІЙНІ ВЕРИФІКОВАНІ СЕНСОРИ ТЕЛЕМЕТРІЇ DYNESS-L
 # =======================================================================
 
-  # --- 📊 КАНАЛ MASTER БАТАРЕЇ (БЛОК №1) ---
+  # --- КАНАЛ MASTER БАТАРЕЇ (БЛОК №1) ---
   - platform: template
     id: dyness_master_total_voltage
     name: "Dyness Master Total Voltage"
@@ -142,7 +142,7 @@ sensor:
     accuracy_decimals: 0
     state_class: "total_increasing"
 
-  # --- 📊 КАНАЛ SLAVE БАТАРЕЇ (БЛОК №2) ---
+  # --- КАНАЛ SLAVE БАТАРЕЇ (БЛОК №2) ---
   - platform: template
     id: dyness_slave_total_voltage
     name: "Dyness Slave Total Voltage"
@@ -182,7 +182,7 @@ sensor:
     accuracy_decimals: 0
     state_class: "total_increasing"
 
-  # --- 🔋 СУМАРНІ ІНВЕРТОРНІ ПАРАМЕТРИ PYLONTECH ---
+  # --- СУМАРНІ ІНВЕРТОРНІ ПАРАМЕТРИ PYLONTECH ---
   - platform: template
     id: dyness_stack_capacity
     name: "BMS Stack Nominal Capacity"
