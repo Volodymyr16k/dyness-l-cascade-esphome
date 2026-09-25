@@ -89,7 +89,7 @@ To establish physical layer communication, connect your ESP32 board to the SN65H
 
 We successfully mapped the complete binary matrix of the internal cascade network. Detailed breakdowns of scaling factors, multiplexer behavioral rules, and memory mapping addresses are fully documented inside the following registries:
 
-- **Internal Engineering Cascade (29-bit Extended Big-Endian):** Explains hardware level telemetry including cell protection thresholds and internal clock cycles inside the [Cascade Telemetry Matrix](docs/can_frames.md).
+- **Internal Engineering Cascade (29-bit Extended Big-Endian):** Explains hardware level telemetry including cell protection thresholds and internal clock cycles inside the [Cascade Telemetry Matrix](docs/can_frames_dyness_l.md).
 - **Inverter Broadcasting Map (11-bit Standard Little-Endian):** Breaks down the emulated Pylontech structures used for active inverter throttling inside the [Inverter Protocol Matrix](docs/can_frames_pylon_l.md).
 
 ---
