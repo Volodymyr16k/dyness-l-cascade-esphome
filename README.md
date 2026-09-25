@@ -19,7 +19,7 @@ The engineering profiles and telemetry mapping in this repository were researche
 - **Nominal Module Energy:** 2.4 kWh per block
 - **Nominal Voltage:** 48V
 - **Communication Interfaces:** Built-in CAN / RS485 modular logic
-- **Industrial Deployment Sample:** You can review an official real-world case study of four B4850 units running in parallel with a Deye inverter directly on the manufacturer's portal: [Dyness Official B4850 Residential Case Study](https://ua.dyness.com/residential-energy-storage-cases-89).
+- **Industrial Deployment Sample:** You can review an official real-world case study of four B4850 units running in parallel with a Deye inverter directly on the manufacturer's portal: [Dyness Official B4850 Residential Case Study](https://www.dyness.com/b4850-deye-parallel-home-energy-storage-project-in-brazil).
 
 ---
 
