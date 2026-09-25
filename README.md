@@ -26,7 +26,7 @@ The engineering profiles and telemetry mapping in this repository were researche
 ## 📑 Decoded Documentation Maps
 
 Detailed bitmasks, scaling criteria, byte shifts, and structural breakdowns are separated into specialized technical logs:
-1. **Internal Cascade Protocol:** Full analysis of 29-bit Big-Endian frames used for inter-module load balancing and clock synchronization -> [docs/can_frames.md](docs/can_frames.md)
+1. **Internal Cascade Protocol:** Full analysis of 29-bit Big-Endian frames used for inter-module load balancing and clock synchronization -> [can_frames_dyness_l.md](can_frames_dyness_l.md)
 2. **Inverter Pylon Protocol:** Complete registry of standard 11-bit Little-Endian frames emitted to control hybrid inverter stages -> [docs/can_frames_pylon_l.md](docs/can_frames_pylon_l.md)
 3. **Physical Wiring Guide:** Precise PIN layout for the diagnostic RJ45 port and transceiver interconnect layout -> [docs/pinout.md](docs/pinout.md)
 
