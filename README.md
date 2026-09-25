@@ -4,7 +4,54 @@ This repository contains a complete, production-ready ESPHome configuration for 
 
 Through live hardware reverse-engineering, this implementation decodes deep internal metrics per battery block (voltages, averages, true hardware cycles, and extreme cell deltas) without polling or console spam.
 
-Inspired by and extending the architectural core of the [grericht/dyness-bms-esphome-canbus](https://github.com/grericht/dyness-bms-esphome-canbus) project.
+Inspired by and built upon the core concepts from the [grericht/dyness-bms-esphome-canbus](https://github.com) repository.
+
+---
+
+## 🔋 Hardware Reference: Dyness B4850
+
+The engineering profiles and telemetry mapping in this repository were researched and verified using a residential energy storage stack composed of **Dyness B4850** LiFePO4 battery modules connected in a parallel cascade layout.
+
+![Dyness B4850 Battery Module](assets/images/B4850.jpg)
+
+### Module Specifications
+- **Battery Type:** Lithium Iron Phosphate (LiFePO4)
+- **Nominal Module Energy:** 2.4 kWh per block
+- **Nominal Voltage:** 48V
+- **Communication Interfaces:** Built-in CAN / RS485 modular logic
+- **Industrial Deployment Sample:** You can review an official real-world case study of four B4850 units running in parallel with a Deye inverter directly on the manufacturer's portal: [Dyness Official B4850 Residential Case Study](https://ua.dyness.com/residential-energy-storage-cases-89).
+
+---
+
+## 📑 Decoded Documentation Maps
+
+Detailed bitmasks, scaling criteria, byte shifts, and structural breakdowns are separated into specialized technical logs:
+1. **Internal Cascade Protocol:** Full analysis of 29-bit Big-Endian frames used for inter-module load balancing and clock synchronization -> [docs/can_frames.md](docs/can_frames.md)
+2. **Inverter Pylon Protocol:** Complete registry of standard 11-bit Little-Endian frames emitted to control hybrid inverter stages -> [docs/can_frames_pylon_l.md](docs/can_frames_pylon_l.md)
+3. **Physical Wiring Guide:** Precise PIN layout for the diagnostic RJ45 port and transceiver interconnect layout -> [docs/pinout.md](docs/pinout.md)
+
+---
+
+## ⚙️ Core Deployment Script (`yaml`)
+
+The primary integration file is located in the root directory: [sniffer_can_pylon_dyness.yml](sniffer_can_pylon_dyness.yml).
+
+### Quick Setup
+1. Copy the code from `sniffer_can_pylon_dyness.yml` into your local ESPHome compiler.
+2. Wire your ESP32 board to the SN65HVD230 differential transceiver following the matrix defined in the hardware docs.
+3. flash the firmware over-the-air (OTA).
+
+---
+
+## 🕵️‍♂️ Active Smart Sniffer Interface
+
+The runtime framework registers a custom wideband hardware trap inside the CAN controller engine. Whenever an unmapped or rare diagnostic frame passes through the battery bus line, it captures the payload, builds a clean HEX string buffer, and updates the state machine:
+
+```text
+Captured Raw Frame: 0x18F21122 [0D 05 0E 0D 04 09 00 FA]
+```
+
+This single-shot lookup table populates natively into Home Assistant using the standard API connection, isolating unknown network packets instantly without spamming system logs.
 
 ---
 
@@ -92,3 +139,9 @@ if (id(local_discovered_ids).find(can_id) == id(local_discovered_ids).end()) {
 - Architectural foundation based on the [grericht/dyness-bms-esphome-canbus](https://github.com/grericht/dyness-bms-esphome-canbus) repository.
 - Extended, multi-node reverse engineering, testing, and implementation completed by [@Volodymyr16k](https://github.com/Volodymyr16k).
 - Provided under the MIT License. Feel free to use, modify, and distribute for personal or commercial battery storage integration.
+
+
+
+
+
+
