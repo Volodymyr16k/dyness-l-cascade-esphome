@@ -4,7 +4,7 @@ This repository contains a complete, production-ready ESPHome configuration for 
 
 Through live hardware reverse-engineering, this implementation decodes deep internal metrics per battery block (voltages, averages, true hardware cycles, and extreme cell deltas) without polling or console spam.
 
-Inspired by and built upon the core concepts from the [grericht/dyness-bms-esphome-canbus](https://github.com) repository.
+Inspired by and built upon the core concepts from the [grericht/dyness-bms-esphome-canbus](https://github.com/grericht/dyness-bms-esphome-canbus/tree/main) repository.
 
 ---
 
